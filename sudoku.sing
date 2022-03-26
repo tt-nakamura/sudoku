@@ -1,0 +1,58 @@
+// solve sudoku puzzle
+// A = initial state matrix
+// m = sqrt(number of rows in A)
+// nrows(A) == ncols(A) == m**2
+// empty places must be filled with zeros
+// return B = final state matrix
+// referece: W. Decker and G. Pfister
+//   "A First Course in Computational Algebraic Geometry"
+//    chapter 3
+proc sudoku(intmat A, int m) {
+  int i,j,k,a,b,ia,ib,ja,jb,ka,kb,n,d;
+
+  d = m*m; n = d*d;
+  ring R = 0, x(1..n), dp;
+
+  poly f = var(1)-1;
+  for(i=2; i<=d; i++) { f = f*(var(1)-i); } 
+
+  ideal F; F[1] = f; 
+  for(k=2; k<=n; k++) { F[k] = subst(f,var(1),var(k)); }
+
+  for(a=1; a<=n; a++) {
+    ia = (a-1)div d; ja = (a-1)mod d;
+    ka = (ia div m)*m + (ja div m);
+    for(b=a+1; b<=n; b++) {
+      ib = (b-1)div d; jb = (b-1)mod d;
+      kb = (ib div m)*m + (jb div m);
+      if(ia==ib || ja==jb || ka==kb) {
+        F[k] = (F[a] - F[b])/(var(a) - var(b));
+	k++; } } }
+
+  for(i=1; i<=d; i++) {
+    for(j=1; j<=d; j++) {
+      if(A[i,j] != 0) {
+        F[k] = var((i-1)*d+j) - A[i,j];
+	k++; } } }
+
+  option(redSB);
+  ideal G = std(F);
+
+  intmat B[d][d];
+  for(k=0; k<n; k++) {
+    i = k div d; j = k mod d;
+    B[i+1,j+1] = int(-G[n-k][2]);
+  }
+  return(B);
+}
+
+intmat A[9][9] = 9,0,0,0,0,0,0,0,8,
+                 5,0,0,2,0,8,0,6,0,
+                 0,0,3,7,1,0,0,0,9,
+                 0,0,0,0,7,3,0,5,0,
+                 2,0,0,0,0,0,0,0,4,
+                 0,5,0,1,6,0,0,0,0,
+                 8,0,0,0,2,7,3,0,0,
+                 0,4,0,3,0,9,0,0,1,
+                 7,0,0,0,0,0,0,0,2;
+print(sudoku(A,3));
